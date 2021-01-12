@@ -6,8 +6,10 @@ package com.example.myar01
 //import com.google.android.filament.Box
 import android.graphics.Color.RED
 import android.graphics.Color.WHITE
+import android.media.CamcorderProfile
 import android.os.Bundle
 import android.util.TypedValue
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.Toast
@@ -45,6 +47,9 @@ class MainActivity : AppCompatActivity() {
 
     val viewNodes = mutableListOf<Node>()
     private lateinit var photoSaver: PhotoSaver
+    private lateinit var videoRecorder: VideoRecorder
+
+    private var isRecording =false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +62,11 @@ class MainActivity : AppCompatActivity() {
 
         photoSaver = PhotoSaver(this)
 
+        videoRecorder = VideoRecorder(this).apply {
+            sceneView = arFragment.arSceneView
+            setVideoQuality(CamcorderProfile.QUALITY_1080P, resources.configuration.orientation)
+        }
+
         getCurrentScence().addOnUpdateListener {
             rotateViewNodesTowardsUser()
         }
@@ -64,7 +74,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupFab(){
         fab.setOnClickListener {
-            photoSaver.takePhoto(arFragment.arSceneView)
+            if (!isRecording){
+                photoSaver.takePhoto(arFragment.arSceneView)
+            }
+        }
+        fab.setOnLongClickListener {
+            isRecording = videoRecorder.toggleRecordingState()
+            true
+        }
+        fab.setOnTouchListener { view, motionEvent ->
+            if (motionEvent.action == MotionEvent.ACTION_UP && isRecording){
+                isRecording = videoRecorder.toggleRecordingState()
+                Toast.makeText(this, "Saved video to gallery!", Toast.LENGTH_LONG).show()
+                true
+            }else false
+
         }
     }
 
